@@ -1,5 +1,9 @@
+/* rotta index */
 const index = (req, res) => {
   res.send('server dei dottori')
-  const store = (req, res) => {
-    res.send('Rotta store');
-  }
+}
+
+/* rotta store  */
+const store = (req, res) => {
+  res.send('Rotta store');
+}
