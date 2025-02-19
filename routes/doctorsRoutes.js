@@ -11,7 +11,10 @@ router.get('/:id', doctorsController.show)
 
 
 //store
-router.post('/', movieController.store)
+router.post('/', doctorsController.store)
+
+//update
+router.put('/:id', doctorsController.update)
 
 
 

@@ -14,6 +14,11 @@ const store = (req, res) => {
   res.send('Rotta store');
 }
 
+//rotta update
+const update = (req, res) => {
+  const id = req.params.id;
+  res.send = (`Rotta update con id ${id}`);
+}
 
 
 
