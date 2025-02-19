@@ -1,29 +1,38 @@
-//rotta index
-const index = (req, res) => {
-  res.send('server dei dottori');
+const connection = require('../data/db')
+
+//Rotta index doctors (visualizza tutti i dottori)
+const indexDoctors = (req, res) => {
+  res.send('Lista di tutti i dottori');
 }
 
-//controller show
-const show = (req, res) => {
+//Rotta show doctor (visualizza un dottore e le sue recensioni)
+const showDoctor = (req, res) => {
   const id = req.params.id;
-  res.send(`Dettagli del dottore con id ${id}`);
+  res.send(`Dettagli del dottore con id: ${id}`);
 }
 
-//rotta store
-const store = (req, res) => {
-  res.send('Rotta store');
+//Rotta store doctor (aggiungi un dottore)
+const storeDoctor = (req, res) => {
+  res.send('Aggiungi un dottore alla lista dei dottori');
 }
 
-//rotta update
-const update = (req, res) => {
+//Rotta store review (aggiungi una recensione ad un determinato dottore)
+const storeReview = (req, res) => {
   const id = req.params.id;
-  res.send = (`Rotta update con id ${id}`);
+  res.send(`Aggiungi una recensione al dottore con id: ${id}`)
+}
+
+//Rotta update doctor (modifica un dottore con un determinato id)
+const updateDoctor = (req, res) => {
+  const id = req.params.id;
+  res.send = (`Modifico i dati del dottore con id: ${id}`);
 }
 
 
 module.exports = {
-  index,
-  show,
-  store,
-  update
+  indexDoctors,
+  showDoctor,
+  storeDoctor,
+  storeReview,
+  updateDoctor
 }
