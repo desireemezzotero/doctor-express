@@ -7,3 +7,12 @@ const index = (req, res) => {
 const store = (req, res) => {
   res.send('Rotta store');
 }
+
+
+
+module.exports = {
+  index,
+  show,
+  store,
+  update
+}
