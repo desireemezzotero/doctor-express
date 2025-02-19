@@ -1,5 +1,6 @@
 const connection = require('../data/db')
 
+
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
   res.send('Lista di tutti i dottori');
@@ -8,7 +9,37 @@ const indexDoctors = (req, res) => {
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
 const showDoctor = (req, res) => {
   const id = req.params.id;
-  res.send(`Dettagli del dottore con id: ${id}`);
+
+  const sql = ` SELECT D.*, ROUND(AVG(R.vote),1) AS average_vote, D.image
+  FROM doctors D
+  LEFT JOIN reviews R ON D.id = R.doctor_id
+  WHERE D.id = ?
+  `
+  const sqlReviews = `SELECT *
+  FROM reviews R
+  WHERE R.doctor_id = ?
+  `
+
+  //Query per il singolo dottore
+  connection.query(sql, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Query error on database (doctor)' });
+    if (results.length === 0 || results[0].id === null) return res.status(404).json({ error: 'Doctor not found' });
+    const doctor = {
+      ...results[0],
+      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
+    }
+
+    //Query per le recensioni
+    connection.query(sqlReviews, [id], (err, resultsReviews) => {
+      if (err) return res.status(500).json({ error: 'Query error on database (review)' });
+
+      res.json({
+        ...doctor,
+        reviews: resultsReviews
+      })
+    })
+
+  })
 }
 
 //Rotta store doctor (aggiungi un dottore)
