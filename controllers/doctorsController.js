@@ -1,15 +1,15 @@
-/* rotta index */
+//rotta index
 const index = (req, res) => {
-  res.send('server dei dottori')
+  res.send('server dei dottori');
 }
 
-// controller show
+//controller show
 const show = (req, res) => {
   const id = req.params.id;
-  res.send(`Dettagli del dottore con id ${id}`)
+  res.send(`Dettagli del dottore con id ${id}`);
 }
 
-/* rotta store  */
+//rotta store
 const store = (req, res) => {
   res.send('Rotta store');
 }
@@ -19,7 +19,6 @@ const update = (req, res) => {
   const id = req.params.id;
   res.send = (`Rotta update con id ${id}`);
 }
-
 
 
 module.exports = {

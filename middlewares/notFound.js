@@ -1,4 +1,4 @@
-function notFound(req,res,netxt) {
+function notFound(req, res, netxt) {
   res.status(404)
   res.json({
     message: 'Risorsa non trovata',
@@ -7,4 +7,4 @@ function notFound(req,res,netxt) {
   })
 }
 
-module.exports =  notFound
+module.exports = notFound
