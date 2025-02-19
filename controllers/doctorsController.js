@@ -2,7 +2,12 @@ const connection = require('../data/db')
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
-  res.send('Lista di tutti i dottori');
+  const sql = 'SELECT * FROM doctors'
+  connection.query(sql, (err,results) => {
+    if(err) return res.status(500).json({err:'query al db fallita'})
+      res.json(results)
+    
+  })
 }
 
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
