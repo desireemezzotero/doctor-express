@@ -21,7 +21,6 @@ const update = (req, res) => {
 }
 
 
-
 module.exports = {
   index,
   show,

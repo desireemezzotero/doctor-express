@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
   res.send('sono la prima rotta')
 })
 
-app.use('doctor', doctorRouter);
+app.use('/doctor', doctorRouter);
 app.use(errorHandler)
 app.use(notFound)
 
