@@ -56,15 +56,17 @@ const storeDoctor = (req, res) => {
 const storeReview = (req, res) => {
   const id = req.params.id
   const { full_name, title, description, vote, date } = req.body
+  
+  if(!full_name || !title || !description || !vote){
+    res.status(400).json({error: 'Tutti i dati sono obbligatori'})}
 
   const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote, date) VALUES(?, ?, ?, ?, ?, ?)'
   connection.query(
     sql,
     [id, full_name, title, description, vote, date],
     (err, results) => {
-
       if (err) return res.status(500).json({ error: 'Query al database doctors fallita' })
-      res.status(201).json({ status: 'success', message: 'Dottore aggiunto con successo' })
+      res.status(201).json({ status: 'success', message: 'Recensione al dottore aggiunta con successo' })
     }
   )
 }
