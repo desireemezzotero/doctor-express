@@ -8,7 +8,7 @@ router.get('/', doctorsController.index)
 
 // Rotta show 
 router.get('/:id', doctorsController.show)
-module.exports = router
+
 
 //store
 router.post('/', movieController.store)
