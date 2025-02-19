@@ -3,13 +3,48 @@ const connection = require('../data/db')
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
-  const sql = 'SELECT * FROM doctors'
+  const sql = `SELECT doctors.* , reviews.*
+               FROM doctors 
+               LEFT JOIN reviews ON reviews.doctor_id = doctors.id`
+
   connection.query(sql, (err,results) => {
+
     if(err) return res.status(500).json({err:'query al db fallita'})
-      res.json(results)
-    
-  })
-}
+
+    const doctors = []
+  
+    results.forEach(res => {
+
+      let doctor = doctors.find(d => d.id === res.doctor_id);
+
+      if (!doctor) {
+        doctor = {
+          id: res.doctor_id,
+          name: res.name,
+          surname: res.surname,
+          telephone: res.telephone,
+          email: res.email,
+          reviews: []
+        };
+        doctors.push(doctor); 
+      }
+
+      if (res.full_name) {
+        doctor.reviews.push({
+          full_name: res.full_name,
+          vote: res.vote,
+          description: res.description,
+          date: res.date
+        });
+      }
+    })
+
+    res.json(doctors);
+
+     console.log(doctors)
+    })
+  }
+
 
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
 const showDoctor = (req, res) => {
