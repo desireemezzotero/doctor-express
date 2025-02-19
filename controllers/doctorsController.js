@@ -4,10 +4,10 @@ const connection = require('../data/db')
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
   const sql = 'SELECT * FROM doctors'
-  connection.query(sql, (err,results) => {
-    if(err) return res.status(500).json({err:'query al db fallita'})
-      res.json(results)
-    
+  connection.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ err: 'query al db fallita' })
+    res.json(results)
+
   })
 }
 
@@ -49,7 +49,32 @@ const showDoctor = (req, res) => {
 
 //Rotta store doctor (aggiungi un dottore)
 const storeDoctor = (req, res) => {
-  res.send('Aggiungi un dottore alla lista dei dottori');
+  const { name, surname, telephone, email, specialities } = req.body;
+  const imageName = 'ciao'; //req.file.filename;
+
+  const sql = 'INSERT INTO doctors (name, surname, telephone, email, image) VALUES (?, ?, ?, ?, ?)';
+  const sqlGetLastId = 'SELECT LAST_INSERT_ID()';
+  const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
+
+  connection.query(sql, [name, surname, telephone, email, imageName], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
+    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' });
+
+    connection.query(sqlGetLastId, (err, results) => {
+      const result = results;
+      const lastInsertId = result[0]['LAST_INSERT_ID()'];
+
+      if (specialities && specialities.length > 0) {
+        const specialityValues = specialities.map(specialityId => [lastInsertId, specialityId]);
+
+        specialityValues.map(element => {
+          connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
+            console.log('Inserimento dati con successo')
+          })
+        })
+      }
+    })
+  })
 }
 
 //Rotta store review (aggiungi una recensione ad un determinato dottore)
