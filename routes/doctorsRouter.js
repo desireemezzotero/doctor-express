@@ -13,6 +13,9 @@ router.get('/:id', doctorsController.showDoctor);
 //Rotta per aggiungere un dottore alla lista
 router.post('/', doctorsController.storeDoctor);
 
+//Rotta per aggiungere una recensione alla lista
+router.post('/:id/reviews', doctorsController.storeReview);
+
 //Rotta per modificare i dati di un determinato dottore (momentaneamente non necessaria)
 router.put('/:id', doctorsController.updateDoctor);
 
