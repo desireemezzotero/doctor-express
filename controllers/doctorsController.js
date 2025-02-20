@@ -3,13 +3,48 @@ const connection = require('../data/db')
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
-  const sql = 'SELECT * FROM doctors'
-  connection.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ err: 'query al db fallita' })
-    res.json(results)
+  const sql = `SELECT doctors.* , reviews.*
+               FROM doctors 
+               LEFT JOIN reviews ON reviews.doctor_id = doctors.id`
 
-  })
-}
+  connection.query(sql, (err,results) => {
+
+    if(err) return res.status(500).json({err:'query al db fallita'})
+
+    const doctors = []
+  
+    results.forEach(res => {
+
+      let doctor = doctors.find(d => d.id === res.doctor_id);
+
+      if (!doctor) {
+        doctor = {
+          id: res.doctor_id,
+          name: res.name,
+          surname: res.surname,
+          telephone: res.telephone,
+          email: res.email,
+          reviews: []
+        };
+        doctors.push(doctor); 
+      }
+
+      if (res.full_name) {
+        doctor.reviews.push({
+          full_name: res.full_name,
+          vote: res.vote,
+          description: res.description,
+          date: res.date
+        });
+      }
+    })
+
+    res.json(doctors);
+
+     console.log(doctors)
+    })
+  }
+
 
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
 const showDoctor = (req, res) => {
@@ -81,15 +116,17 @@ const storeDoctor = (req, res) => {
 const storeReview = (req, res) => {
   const id = req.params.id
   const { full_name, title, description, vote, date } = req.body
+  
+  if(!full_name || !title || !description || !vote){
+    res.status(400).json({error: 'Tutti i dati sono obbligatori'})}
 
   const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote, date) VALUES(?, ?, ?, ?, ?, ?)'
   connection.query(
     sql,
     [id, full_name, title, description, vote, date],
     (err, results) => {
-
       if (err) return res.status(500).json({ error: 'Query al database doctors fallita' })
-      res.status(201).json({ status: 'success', message: 'Dottore aggiunto con successo' })
+      res.status(201).json({ status: 'success', message: 'Recensione al dottore aggiunta con successo' })
     }
   )
 }
