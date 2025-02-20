@@ -55,7 +55,6 @@ const storeDoctor = (req, res) => {
 
 
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image) VALUES (?, ?, ?, ?, ?)';
-  const sqlGetLastId = 'SELECT LAST_INSERT_ID()';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
   const sqlAddress = 'INSERT INTO addresses (name_address, number, city, cap, province_of_city) VALUES (?, ?, ?, ?, ?)';
   const sqlInsBridgeTableAddress = 'INSERT INTO doctor_address (doctor_id, address_id) VALUES (?, ?)';
@@ -63,33 +62,31 @@ const storeDoctor = (req, res) => {
   connection.query(sql, [name, surname, telephone, email, imageName], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
     res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' });
-    
-    connection.query(sqlGetLastId, (err, results) => {
-      const result = results;
-      const lastInsertId = result[0]['LAST_INSERT_ID()'];
 
-      if (specialities && specialities.length > 0) {
-        const specialityValues = specialities.map(specialityId => [lastInsertId, specialityId]);
+    const inseretIdDoctor = results.insertId;
 
-        specialityValues.map(element => {
-          connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
-            console.log('Inserimento dati con successo')
-          })
+    if (specialities && specialities.length > 0) {
+      const specialityValues = specialities.map(specialityId => [inseretIdDoctor, specialityId]);
+
+      specialityValues.map(element => {
+        connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
+          console.log('Inserimento dati con successo')
         })
-      }
+      })
+    }
 
-      addresses.map(element => {
-        const { name_address, number, city, cap, province_of_city } = element;
-        connection.query(sqlAddress, [name_address, number, city, cap, province_of_city], (err, results) => {
-          const insertIdAddress = results.insertId;
+    addresses.map(element => {
+      const { name_address, number, city, cap, province_of_city } = element;
+      connection.query(sqlAddress, [name_address, number, city, cap, province_of_city], (err, results) => {
+        const insertIdAddress = results.insertId;
 
-          connection.query(sqlInsBridgeTableAddress, [lastInsertId, insertIdAddress], (err, results) => {
-            if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati nella tabella ponte' });
-            console.log('dato inserito')
-          })
+        connection.query(sqlInsBridgeTableAddress, [inseretIdDoctor, insertIdAddress], (err, results) => {
+          if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati nella tabella ponte' });
+          console.log('dato inserito')
         })
       })
     })
+
   })
 }
 
