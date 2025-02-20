@@ -3,49 +3,14 @@ const connection = require('../data/db')
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
-  const sql = `SELECT doctors.* , reviews.*
-               FROM doctors 
-               LEFT JOIN reviews ON reviews.doctor_id = doctors.id`
 
+  const sql = "SELECT D.*, ROUND(AVG(R.vote),1) AS average_vote FROM doctors D LEFT JOIN reviews R ON D.id = R.doctor_id GROUP BY `D`.`id`";
   connection.query(sql, (err, results) => {
-
     if (err) return res.status(500).json({ err: 'query al db fallita' })
-
-    const doctors = []
-
-    results.forEach(res => {
-
-      let doctor = doctors.find(d => d.id === res.doctor_id);
-
-      if (!doctor) {
-        doctor = {
-          id: res.doctor_id,
-          name: res.name,
-          surname: res.surname,
-          telephone: res.telephone,
-          email: res.email,
-          image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null,
-          reviews: []
-        };
-        doctors.push(doctor);
-      }
-
-      if (res.full_name) {
-        doctor.reviews.push({
-          full_name: res.full_name,
-          vote: res.vote,
-          description: res.description,
-          date: res.date
-        });
-      }
-    })
-
-    res.json(doctors);
-
-    console.log(doctors)
+    res.json(results)
   })
-}
 
+}
 
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
 const showDoctor = (req, res) => {
@@ -55,11 +20,11 @@ const showDoctor = (req, res) => {
   FROM doctors D
   LEFT JOIN reviews R ON D.id = R.doctor_id
   WHERE D.id = ?
-  `
+  `;
   const sqlReviews = `SELECT *
   FROM reviews R
   WHERE R.doctor_id = ?
-  `
+  `;
 
   //Query per il singolo dottore
   connection.query(sql, [id], (err, results) => {
@@ -79,8 +44,8 @@ const showDoctor = (req, res) => {
         reviews: resultsReviews
       })
     })
-
   })
+
 }
 
 //Rotta store doctor (aggiungi un dottore)
@@ -98,7 +63,7 @@ const storeDoctor = (req, res) => {
   connection.query(sql, [name, surname, telephone, email, imageName], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
     res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' });
-
+    
     connection.query(sqlGetLastId, (err, results) => {
       const result = results;
       const lastInsertId = result[0]['LAST_INSERT_ID()'];
@@ -117,8 +82,6 @@ const storeDoctor = (req, res) => {
         const { name_address, number, city, cap, province_of_city } = element;
         connection.query(sqlAddress, [name_address, number, city, cap, province_of_city], (err, results) => {
           const insertIdAddress = results.insertId;
-
-
 
           connection.query(sqlInsBridgeTableAddress, [lastInsertId, insertIdAddress], (err, results) => {
             if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati nella tabella ponte' });
@@ -156,7 +119,7 @@ const updateDoctor = (req, res) => {
   res.send = (`Modifico i dati del dottore con id: ${id}`);
 }
 
-//ciao
+
 module.exports = {
   indexDoctors,
   showDoctor,
@@ -164,18 +127,3 @@ module.exports = {
   storeReview,
   updateDoctor
 }
-
-
-
-
-/*
-connection.query(sqlAddress, [addresses], (err, results) => {
-  console.log(results)
-  if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati dell\'indirizzo' });
-  connection.query(sqlGetLastId, (err, results) => {
-    const result = results;
-    const lastInsertId = result[0]['LAST_INSERT_ID()'];
-    console.log(lastInsertId)
-  })
-})
-*/
