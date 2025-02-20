@@ -7,12 +7,12 @@ const indexDoctors = (req, res) => {
                FROM doctors 
                LEFT JOIN reviews ON reviews.doctor_id = doctors.id`
 
-  connection.query(sql, (err,results) => {
+  connection.query(sql, (err, results) => {
 
-    if(err) return res.status(500).json({err:'query al db fallita'})
+    if (err) return res.status(500).json({ err: 'query al db fallita' })
 
     const doctors = []
-  
+
     results.forEach(res => {
 
       let doctor = doctors.find(d => d.id === res.doctor_id);
@@ -24,9 +24,10 @@ const indexDoctors = (req, res) => {
           surname: res.surname,
           telephone: res.telephone,
           email: res.email,
+          image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null,
           reviews: []
         };
-        doctors.push(doctor); 
+        doctors.push(doctor);
       }
 
       if (res.full_name) {
@@ -41,9 +42,9 @@ const indexDoctors = (req, res) => {
 
     res.json(doctors);
 
-     console.log(doctors)
-    })
-  }
+    console.log(doctors)
+  })
+}
 
 
 //Rotta show doctor (visualizza un dottore e le sue recensioni)
@@ -84,12 +85,15 @@ const showDoctor = (req, res) => {
 
 //Rotta store doctor (aggiungi un dottore)
 const storeDoctor = (req, res) => {
-  const { name, surname, telephone, email, specialities } = req.body;
+  const { name, surname, telephone, email, specialities, addresses } = req.body;
   const imageName = 'ciao'; //req.file.filename;
+
 
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image) VALUES (?, ?, ?, ?, ?)';
   const sqlGetLastId = 'SELECT LAST_INSERT_ID()';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
+  const sqlAddress = 'INSERT INTO addresses (name_address, number, city, cap, province_of_city) VALUES (?, ?, ?, ?, ?)';
+  const sqlInsBridgeTableAddress = 'INSERT INTO doctor_address (doctor_id, address_id) VALUES (?, ?)';
 
   connection.query(sql, [name, surname, telephone, email, imageName], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
@@ -108,6 +112,20 @@ const storeDoctor = (req, res) => {
           })
         })
       }
+
+      addresses.map(element => {
+        const { name_address, number, city, cap, province_of_city } = element;
+        connection.query(sqlAddress, [name_address, number, city, cap, province_of_city], (err, results) => {
+          const insertIdAddress = results.insertId;
+
+
+
+          connection.query(sqlInsBridgeTableAddress, [lastInsertId, insertIdAddress], (err, results) => {
+            if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati nella tabella ponte' });
+            console.log('dato inserito')
+          })
+        })
+      })
     })
   })
 }
@@ -116,9 +134,10 @@ const storeDoctor = (req, res) => {
 const storeReview = (req, res) => {
   const id = req.params.id
   const { full_name, title, description, vote, date } = req.body
-  
-  if(!full_name || !title || !description || !vote){
-    res.status(400).json({error: 'Tutti i dati sono obbligatori'})}
+
+  if (!full_name || !title || !description || !vote) {
+    res.status(400).json({ error: 'Tutti i dati sono obbligatori' })
+  }
 
   const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote, date) VALUES(?, ?, ?, ?, ?, ?)'
   connection.query(
@@ -145,3 +164,18 @@ module.exports = {
   storeReview,
   updateDoctor
 }
+
+
+
+
+/*
+connection.query(sqlAddress, [addresses], (err, results) => {
+  console.log(results)
+  if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati dell\'indirizzo' });
+  connection.query(sqlGetLastId, (err, results) => {
+    const result = results;
+    const lastInsertId = result[0]['LAST_INSERT_ID()'];
+    console.log(lastInsertId)
+  })
+})
+*/
