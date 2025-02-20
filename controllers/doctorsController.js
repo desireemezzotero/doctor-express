@@ -4,10 +4,10 @@ const connection = require('../data/db')
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
   const sql = 'SELECT * FROM doctors'
-  connection.query(sql, (err,results) => {
-    if(err) return res.status(500).json({err:'query al db fallita'})
-      res.json(results)
-    
+  connection.query(sql, (err, results) => {
+    if (err) return res.status(500).json({ err: 'query al db fallita' })
+    res.json(results)
+
   })
 }
 
@@ -75,7 +75,7 @@ const updateDoctor = (req, res) => {
   res.send = (`Modifico i dati del dottore con id: ${id}`);
 }
 
-
+//ciao
 module.exports = {
   indexDoctors,
   showDoctor,
