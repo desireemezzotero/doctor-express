@@ -21,7 +21,7 @@ const indexDoctors = (req, res) => {
 
 }
 
-//Rotta show doctor (visualizza un dottore e le sue recensioni)
+//Rotta show doctor (visualizza un dottore le sue recensioni, le sue specializzazioni e le sedi in cui opera)
 const showDoctor = (req, res) => {
   const id = req.params.id;
 
@@ -48,11 +48,23 @@ const showDoctor = (req, res) => {
         'description', r.description,
         'date', r.date
       )
-    ) AS reviews
+    ) AS reviews,
+    JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'addressId', a.id,
+        'name_address', a.name_address,
+        'number', a.number,
+        'city', a.city,
+        'cap', a.cap,
+        'province_of_city', a.province_of_city
+      )
+    ) AS addresses
     FROM doctors d
     LEFT JOIN doctor_speciality ds ON d.id = ds.doctor_id
     LEFT JOIN specialities s ON ds.speciality_id = s.id
-    LEFT JOIN reviews r ON d.id = r.doctor_id 
+    LEFT JOIN reviews r ON d.id = r.doctor_id
+    LEFT JOIN doctor_address da ON d.id = da.doctor_id
+    LEFT JOIN addresses a ON da.address_id = a.id
     WHERE d.id = ?
     GROUP BY d.id, d.name, d.surname, d.telephone, d.email, d.image;
   `;
@@ -77,8 +89,17 @@ const showDoctor = (req, res) => {
       }
     });
 
+    // Eliminazione duplicati negli indirizzi
+    let addressesArray = [];
+    results[0].addresses.forEach(address => {
+      if (!addressesArray.some(item => item.addressId === address.addressId)) {
+        addressesArray.push(address)
+      }
+    });
+
     const doctor = {
       ...results[0],
+      addresses: addressesArray,
       specializations: specialitiesArray,
       reviews: reviewsArray,
       image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
@@ -88,7 +109,7 @@ const showDoctor = (req, res) => {
   });
 };
 
-//Rotta store doctor (aggiungi un dottore)
+//Rotta store doctor (aggiungi un dottore e i relativi dati)
 const storeDoctor = (req, res) => {
   const { name, surname, telephone, email, specialities, addresses } = req.body;
   const imageName = 'ciao'; //req.file.filename;
