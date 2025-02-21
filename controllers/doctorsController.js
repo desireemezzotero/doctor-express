@@ -16,10 +16,25 @@ const indexDoctors = (req, res) => {
 const showDoctor = (req, res) => {
   const id = req.params.id;
 
-  const sql = ` SELECT D.*, ROUND(AVG(R.vote),1) AS average_vote, D.image
-  FROM doctors D
-  LEFT JOIN reviews R ON D.id = R.doctor_id
-  WHERE D.id = ?
+  const sql = ` SELECT 
+    d.id AS doctorId, 
+    d.name AS doctorName, 
+    d.surname AS doctorSurname, 
+    d.telephone AS doctorTelephone, 
+    d.email AS doctorMail, 
+    ROUND(AVG(R.vote),1) AS average_vote,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'specialityName', s.name, 
+            'specialityDescription', s.description
+        )
+    ) AS specializations
+  FROM doctors d
+  LEFT JOIN doctor_speciality ds ON d.id = ds.doctor_id
+  LEFT JOIN specialities s ON ds.speciality_id = s.id
+  LEFT JOIN reviews r ON d.id = r.doctor_id 
+  WHERE d.id = ?  
+  GROUP BY d.id, d.name, d.surname, d.telephone, d.email, d.image;
   `;
   const sqlReviews = `SELECT *
   FROM reviews R
