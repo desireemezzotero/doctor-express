@@ -1,16 +1,18 @@
-const connection = require('../data/db')
+const connection = require('../data/db');
 
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
 
-  const sql = `SELECT doctors.*,
-  GROUP_CONCAT(CONCAT(specialities.name) ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
-  FROM doctors
-  JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
-  JOIN specialities ON doctor_speciality.speciality_id = specialities.id
-  GROUP BY doctors.id
-  ORDER BY doctors.id;`;
+  const sql = `
+    SELECT doctors.*,
+    GROUP_CONCAT(CONCAT(specialities.name) ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
+    FROM doctors
+    JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
+    JOIN specialities ON doctor_speciality.speciality_id = specialities.id
+    GROUP BY doctors.id
+    ORDER BY doctors.id;
+    `;
 
   connection.query(sql, (err, results) => {
     if (err) return res.status(500).json({ err: 'query al db fallita' })
@@ -23,52 +25,68 @@ const indexDoctors = (req, res) => {
 const showDoctor = (req, res) => {
   const id = req.params.id;
 
-  const sql = ` SELECT 
+  const sql = ` 
+    SELECT 
     d.id AS doctorId, 
     d.name AS doctorName, 
     d.surname AS doctorSurname, 
     d.telephone AS doctorTelephone, 
     d.email AS doctorMail, 
+    d.image AS image,
     ROUND(AVG(R.vote),1) AS average_vote,
     JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'specialityName', s.name, 
-            'specialityDescription', s.description
-        )
-    ) AS specializations
-  FROM doctors d
-  LEFT JOIN doctor_speciality ds ON d.id = ds.doctor_id
-  LEFT JOIN specialities s ON ds.speciality_id = s.id
-  LEFT JOIN reviews r ON d.id = r.doctor_id 
-  WHERE d.id = ?  
-  GROUP BY d.id, d.name, d.surname, d.telephone, d.email, d.image;
-  `;
-  const sqlReviews = `SELECT *
-  FROM reviews R
-  WHERE R.doctor_id = ?
+      JSON_OBJECT(
+        'specialityName', s.name, 
+        'specialityDescription', s.description
+      )
+    ) AS specializations,
+    JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'id', r.id,
+        'vote', r.vote,
+        'title', r.title,
+        'description', r.description,
+        'date', r.date
+      )
+    ) AS reviews
+    FROM doctors d
+    LEFT JOIN doctor_speciality ds ON d.id = ds.doctor_id
+    LEFT JOIN specialities s ON ds.speciality_id = s.id
+    LEFT JOIN reviews r ON d.id = r.doctor_id 
+    WHERE d.id = ?
+    GROUP BY d.id, d.name, d.surname, d.telephone, d.email, d.image;
   `;
 
-  //Query per il singolo dottore
   connection.query(sql, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Query error on database (doctor)' });
-    if (results.length === 0 || results[0].id === null) return res.status(404).json({ error: 'Doctor not found' });
+    if (err) return res.status(500).json({ error: 'Query error on database' });
+    if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'Doctor not found' });
+
+    // Eliminazione duplicati nelle specializzazioni
+    let specialitiesArray = [];
+    results[0].specializations.forEach(specialization => {
+      if (!specialitiesArray.some(item => item.specialityName === specialization.specialityName)) {
+        specialitiesArray.push(specialization);
+      }
+    });
+
+    // Eliminazione duplicati nelle recensioni
+    let reviewsArray = [];
+    results[0].reviews.forEach(review => {
+      if (!reviewsArray.some(item => item.id === review.id)) {
+        reviewsArray.push(review)
+      }
+    });
+
     const doctor = {
       ...results[0],
+      specializations: specialitiesArray,
+      reviews: reviewsArray,
       image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
-    }
+    };
 
-    //Query per le recensioni
-    connection.query(sqlReviews, [id], (err, resultsReviews) => {
-      if (err) return res.status(500).json({ error: 'Query error on database (review)' });
-
-      res.json({
-        ...doctor,
-        reviews: resultsReviews
-      })
-    })
-  })
-
-}
+    res.json(doctor);
+  });
+};
 
 //Rotta store doctor (aggiungi un dottore)
 const storeDoctor = (req, res) => {
