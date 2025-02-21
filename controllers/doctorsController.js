@@ -4,7 +4,14 @@ const connection = require('../data/db')
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
 
-  const sql = "SELECT D.*, ROUND(AVG(R.vote),1) AS average_vote FROM doctors D LEFT JOIN reviews R ON D.id = R.doctor_id GROUP BY `D`.`id`";
+  const sql = `SELECT doctors.*,
+  GROUP_CONCAT(CONCAT(specialities.name) ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
+  FROM doctors
+  JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
+  JOIN specialities ON doctor_speciality.speciality_id = specialities.id
+  GROUP BY doctors.id
+  ORDER BY doctors.id;`;
+
   connection.query(sql, (err, results) => {
     if (err) return res.status(500).json({ err: 'query al db fallita' })
     res.json(results)
