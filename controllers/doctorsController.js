@@ -16,7 +16,7 @@ const indexDoctors = (req, res) => {
 
   connection.query(sql, (err, results) => {
     if (err) return res.status(500).json({ err: 'query al db fallita' })
-    res.json(results);
+    res.json(results)
   })
 
 }
