@@ -79,15 +79,23 @@ const showDoctor = (req, res) => {
     //Eliminazione duplicati in reviews
     let reviewsArray = filterData(results[0].reviews, 'id');
 
-
+    //Logica per comporre l'array delle specializzazioni con tutti i dati completi
+    const completeSpecialitesArray = [];
+    specialitiesArray.map(element => {
+      const completedObject = {
+        specialityIcon: `${req.protocol}://${req.get('host')}/img/specialities_png/${element.specialityIcon}`,
+        specialityName: element.specialityName,
+        specialityDescription: element.specialityDescription
+      }
+      completeSpecialitesArray.push(completedObject)
+    })
 
     //Composizione finale dell'elemento doctor, con tutti i parametri corretti
     const doctor = {
       ...results[0],
-      specializations: specialitiesArray,
+      specializations: completeSpecialitesArray,
       reviews: reviewsArray,
-      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null,
-      icon_url: results[0].specializations.icon ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
+      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
     };
 
     res.json(doctor);
