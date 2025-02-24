@@ -73,30 +73,24 @@ const showDoctor = (req, res) => {
     if (err) return res.status(500).json({ error: 'Query error on database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'Doctor not found' });
 
-    // Eliminazione duplicati nelle specializzazioni
-    let specialitiesArray = [];
-    results[0].specializations.forEach(specialization => {
-      if (!specialitiesArray.some(item => item.specialityName === specialization.specialityName)) {
-        specialitiesArray.push(specialization);
-      }
-    });
+    //Funzione per il filtraggio dei dati duplicati
+    const filterData = (array, key) => {
+      return array.reduce((accumulator, current) => {
+        if (!accumulator.some(element => element[key] === current[key])) {
+          accumulator.push(current)
+        }
+        return accumulator;
+      }, [])
+    }
 
-    // Eliminazione duplicati nelle recensioni
-    let reviewsArray = [];
-    results[0].reviews.forEach(review => {
-      if (!reviewsArray.some(item => item.id === review.id)) {
-        reviewsArray.push(review)
-      }
-    });
+    //Eliminazione duplicati in specialities
+    let specialitiesArray = filterData(results[0].specializations, 'specialityName');
+    //Eliminazione duplicati in reviews
+    let reviewsArray = filterData(results[0].reviews, 'id');
+    //Eliminazione duplicati in adresses
+    let addressesArray = filterData(results[0].addresses, 'addressId');
 
-    // Eliminazione duplicati negli indirizzi
-    let addressesArray = [];
-    results[0].addresses.forEach(address => {
-      if (!addressesArray.some(item => item.addressId === address.addressId)) {
-        addressesArray.push(address)
-      }
-    });
-
+    //Composizione finale dell'elemento doctor, con tutti i parametri corretti
     const doctor = {
       ...results[0],
       addresses: addressesArray,
@@ -112,7 +106,7 @@ const showDoctor = (req, res) => {
 //Rotta store doctor (aggiungi un dottore e i relativi dati)
 const storeDoctor = (req, res) => {
   const { name, surname, telephone, email, specialities, addresses } = req.body;
-  const imageName = 'ciao'; //req.file.filename;
+  const imageName = 'imageName'; //req.file.filename;
 
 
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image) VALUES (?, ?, ?, ?, ?)';
@@ -120,6 +114,7 @@ const storeDoctor = (req, res) => {
   const sqlAddress = 'INSERT INTO addresses (name_address, number, city, cap, province_of_city) VALUES (?, ?, ?, ?, ?)';
   const sqlInsBridgeTableAddress = 'INSERT INTO doctor_address (doctor_id, address_id) VALUES (?, ?)';
 
+  //Aggiunta dati nella tabella doctors al DataBase
   connection.query(sql, [name, surname, telephone, email, imageName], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
     res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' });
@@ -130,6 +125,7 @@ const storeDoctor = (req, res) => {
       const specialityValues = specialities.map(specialityId => [inseretIdDoctor, specialityId]);
 
       specialityValues.map(element => {
+        //Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
         connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
           console.log('Inserimento dati con successo')
         })
@@ -138,9 +134,10 @@ const storeDoctor = (req, res) => {
 
     addresses.map(element => {
       const { name_address, number, city, cap, province_of_city } = element;
+      //Aggiunta dei dati nella tabella addresses al DataBase
       connection.query(sqlAddress, [name_address, number, city, cap, province_of_city], (err, results) => {
         const insertIdAddress = results.insertId;
-
+        //Aggiunta dei dati nella tabella ponte tra addresses e doctors al DataBase
         connection.query(sqlInsBridgeTableAddress, [inseretIdDoctor, insertIdAddress], (err, results) => {
           if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta dei dati nella tabella ponte' });
           console.log('dato inserito')
@@ -161,6 +158,7 @@ const storeReview = (req, res) => {
   }
 
   const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote, date) VALUES(?, ?, ?, ?, ?, ?)'
+  //Aggiunta dei dati nella tabella reviews al DataBase
   connection.query(
     sql,
     [id, full_name, title, description, vote, date],
