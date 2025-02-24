@@ -38,7 +38,8 @@ const showDoctor = (req, res) => {
     JSON_ARRAYAGG(
       JSON_OBJECT(
         'specialityName', s.name, 
-        'specialityDescription', s.description
+        'specialityDescription', s.description,
+        'specialityIcon', s.icon
       )
     ) AS specializations,
     JSON_ARRAYAGG(
@@ -48,6 +49,7 @@ const showDoctor = (req, res) => {
         'title', r.title,
         'description', r.description,
         'date', r.create_date
+
       )
     ) AS reviews
     FROM doctors d
@@ -77,12 +79,15 @@ const showDoctor = (req, res) => {
     //Eliminazione duplicati in reviews
     let reviewsArray = filterData(results[0].reviews, 'id');
 
+
+
     //Composizione finale dell'elemento doctor, con tutti i parametri corretti
     const doctor = {
       ...results[0],
       specializations: specialitiesArray,
       reviews: reviewsArray,
-      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
+      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null,
+      icon_url: results[0].specializations.icon ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
     };
 
     res.json(doctor);
