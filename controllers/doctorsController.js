@@ -3,6 +3,7 @@ const connection = require('../data/db');
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
+  //Salvo nel caso ci fosse, la specializzazione filtrata dalla request
   const specialitySearched = req.body.specialitySearched;
 
   const sql = `
@@ -27,6 +28,7 @@ const indexDoctors = (req, res) => {
       }
       doctors.push(completeDoctor)
     })
+
     res.json(doctors);
   })
 
