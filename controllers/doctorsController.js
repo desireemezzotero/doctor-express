@@ -3,6 +3,7 @@ const connection = require('../data/db');
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
+  const specialitySearched = req.body.specialitySearched;
 
   const sql = `
     SELECT doctors.*,
@@ -10,13 +11,23 @@ const indexDoctors = (req, res) => {
     FROM doctors
     JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
     JOIN specialities ON doctor_speciality.speciality_id = specialities.id
+    WHERE (COALESCE(NULLIF(?, ''), NULL) IS NULL OR specialities.name = ?)
     GROUP BY doctors.id
     ORDER BY doctors.id;
     `;
 
-  connection.query(sql, (err, results) => {
+  connection.query(sql, [specialitySearched, specialitySearched], (err, results) => {
     if (err) return res.status(500).json({ err: 'query al db fallita' })
-    res.json(results)
+
+    let doctors = [];
+    results.map(doctor => {
+      const completeDoctor = {
+        ...doctor,
+        image_url: `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`
+      }
+      doctors.push(completeDoctor)
+    })
+    res.json(doctors);
   })
 
 }
