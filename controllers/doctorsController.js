@@ -31,7 +31,6 @@ const indexDoctors = (req, res) => {
 
     res.json(doctors);
   })
-
 }
 
 //Rotta show doctor (visualizza un dottore le sue recensioni, le sue specializzazioni e le sedi in cui opera)
@@ -62,7 +61,6 @@ const showDoctor = (req, res) => {
         'title', r.title,
         'description', r.description,
         'date', r.create_date
-
       )
     ) AS reviews
     FROM doctors d
@@ -141,8 +139,6 @@ const storeDoctor = (req, res) => {
         })
       })
     }
-
-
   })
 }
 
