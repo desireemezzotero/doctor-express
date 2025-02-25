@@ -114,14 +114,15 @@ const showDoctor = (req, res) => {
 
     // Funzione per ottenere l'URL del placeholder in base al genere
     function getPlaceholderUrl(gender) {
-      return gender === 'male' ? 'placeholder_male.jpg' : 'placeholder_female.jpg';
+      return gender === 'M' ? 'placeholder_male.jpg' : 'placeholder_female.jpg';
     }
 
     // Funzione per ottenere l'URL dell'immagine
     function getImageUrl(protocol, host, image, gender) {
+
       return image
         ? `${protocol}://${host}/img/doctor_img/${image}`
-        : getPlaceholderUrl(gender);
+        : `${protocol}://${host}/img/doctor_img/${getPlaceholderUrl(gender)}`
     }
 
     // Creazione dell'URL dell'immagine
