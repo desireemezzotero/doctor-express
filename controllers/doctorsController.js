@@ -26,7 +26,7 @@ const indexDoctors = (req, res) => {
       let defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`;
       //Logica di controllo per assenza di immagine
       if (doctor.image === null && doctor.gender === 'M') {
-        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.png`;
+        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.jpg`;
       }
       else if (doctor.image === null && doctor.gender === 'F') {
         defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_female.jpg`;
@@ -55,6 +55,7 @@ const showDoctor = (req, res) => {
     d.telephone AS doctorTelephone, 
     d.email AS doctorMail, 
     d.image AS image,
+    d.gender AS gender,
     d.name_address AS address,
     ROUND(AVG(R.vote),1) AS average_vote,
     JSON_ARRAYAGG(
@@ -111,12 +112,27 @@ const showDoctor = (req, res) => {
       completeSpecialitesArray.push(completedObject)
     })
 
+    // Funzione per ottenere l'URL del placeholder in base al genere
+    function getPlaceholderUrl(gender) {
+      return gender === 'male' ? 'placeholder_male.jpg' : 'placeholder_female.jpg';
+    }
+
+    // Funzione per ottenere l'URL dell'immagine
+    function getImageUrl(protocol, host, image, gender) {
+      return image
+        ? `${protocol}://${host}/img/doctor_img/${image}`
+        : getPlaceholderUrl(gender);
+    }
+
+    // Creazione dell'URL dell'immagine
+    const imageUrl = getImageUrl(req.protocol, req.get('host'), results[0].image, results[0].gender);
+
     //Composizione finale dell'elemento doctor, con tutti i parametri corretti
     const doctor = {
       ...results[0],
       specializations: completeSpecialitesArray,
       reviews: reviewsArray,
-      image_url: results[0].image ? `${req.protocol}://${req.get('host')}/img/doctor_img/${results[0].image}` : null
+      image_url: imageUrl
     };
 
     res.json(doctor);
