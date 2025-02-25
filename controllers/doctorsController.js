@@ -22,11 +22,21 @@ const indexDoctors = (req, res) => {
 
     let doctors = [];
     results.map(doctor => {
+
+      let defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`;
+      //Logica di controllo per assenza di immagine
+      if (doctor.image === null && doctor.gender === 'M') {
+        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.png`;
+      }
+      else if (doctor.image === null && doctor.gender === 'F') {
+        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_female.jpg`;
+      }
+
       const completeDoctor = {
         ...doctor,
-        image_url: `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`
+        image_url: defaultDoctorImage
       }
-      doctors.push(completeDoctor)
+      doctors.push(completeDoctor);
     })
 
     res.json(doctors);
