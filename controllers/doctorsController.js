@@ -7,13 +7,14 @@ const indexDoctors = (req, res) => {
   const specialitySearched = req.body.specialitySearched;
 
   const sql = `
-    SELECT doctors.*,
-    ROUND(AVG(reviews.vote),1) AS average_vote,
-    GROUP_CONCAT(CONCAT(specialities.name) ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
+    SELECT doctors.*, 
+      (SELECT ROUND(AVG(reviews.vote),1) 
+      FROM reviews 
+      WHERE reviews.doctor_id = doctors.id) AS average_vote, 
+      GROUP_CONCAT(DISTINCT specialities.name ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
     FROM doctors
     JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
     JOIN specialities ON doctor_speciality.speciality_id = specialities.id
-    JOIN reviews ON doctors.id = reviews.doctor_id
     WHERE (COALESCE(NULLIF(?, ''), NULL) IS NULL OR specialities.name = ?)
     GROUP BY doctors.id
     ORDER BY doctors.id;
