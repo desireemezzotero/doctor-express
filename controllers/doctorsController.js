@@ -75,7 +75,8 @@ const showDoctor = (req, res) => {
         'vote', r.vote,
         'title', r.title,
         'description', r.description,
-        'date', r.create_date
+        'date', r.create_date,
+        'name', r.full_name
       )
     ) AS reviews
     FROM doctors d
