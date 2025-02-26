@@ -23,6 +23,8 @@ const indexDoctors = (req, res) => {
     ORDER BY average_vote DESC, reviews_count DESC;  -- Ordina prima per average_vote e poi per reviews_count
   `;
 
+  const sqlSpecialities = 'SELECT * FROM specialities'
+
   connection.query(sql, [specialitySearched, specialitySearched], (err, results) => {
     if (err) return res.status(500).json({ err: 'query al db fallita' });
 
@@ -42,8 +44,21 @@ const indexDoctors = (req, res) => {
       };
       doctors.push(completeDoctor);
     });
-
-    res.json(doctors);
+    
+    let speciality= []
+    connection.query(sqlSpecialities, (err,specialitiesResults) => {
+      if (err) return res.status(500).json({ error: 'Query error on database' });
+      specialitiesResults.map( resul => {
+        const specialitiesComplete = {
+          id: resul.id,
+          name : resul.name,
+          description : resul.description,
+          icon: `${req.protocol}://${req.get('host')}/img/specialities_png/${resul.icon}`
+        }
+        speciality.push(specialitiesComplete)
+      })
+      res.json({doctors, speciality});
+    })
   });
 };
 
@@ -208,5 +223,5 @@ module.exports = {
   showDoctor,
   storeDoctor,
   storeReview,
-  updateDoctor
+  updateDoctor,
 }
