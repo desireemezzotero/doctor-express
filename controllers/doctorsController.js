@@ -3,49 +3,50 @@ const connection = require('../data/db');
 
 //Rotta index doctors (visualizza tutti i dottori)
 const indexDoctors = (req, res) => {
-  //Salvo nel caso ci fosse, la specializzazione filtrata dalla request
+  // Salvo nel caso ci fosse, la specializzazione filtrata dalla request
   const specialitySearched = req.body.specialitySearched;
 
   const sql = `
     SELECT doctors.*, 
-      (SELECT ROUND(AVG(reviews.vote),1) 
+      (SELECT ROUND(AVG(reviews.vote), 1) 
       FROM reviews 
-      WHERE reviews.doctor_id = doctors.id) AS average_vote, 
+      WHERE reviews.doctor_id = doctors.id) AS average_vote,
+      (SELECT COUNT(reviews.vote) 
+      FROM reviews 
+      WHERE reviews.doctor_id = doctors.id) AS reviews_count,
       GROUP_CONCAT(DISTINCT specialities.name ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
     FROM doctors
     JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
     JOIN specialities ON doctor_speciality.speciality_id = specialities.id
     WHERE (COALESCE(NULLIF(?, ''), NULL) IS NULL OR specialities.name = ?)
     GROUP BY doctors.id
-    ORDER BY doctors.id;
-    `;
-
+    ORDER BY average_vote DESC, reviews_count DESC;  -- Ordina prima per average_vote e poi per reviews_count
+  `;
 
   connection.query(sql, [specialitySearched, specialitySearched], (err, results) => {
-    if (err) return res.status(500).json({ err: 'query al db fallita' })
+    if (err) return res.status(500).json({ err: 'query al db fallita' });
 
     let doctors = [];
     results.map(doctor => {
-
       let defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`;
-      //Logica di controllo per assenza di immagine
+      // Logica di controllo per assenza di immagine
       if (doctor.image === null && doctor.gender === 'M') {
         defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.jpg`;
-      }
-      else if (doctor.image === null && doctor.gender === 'F') {
+      } else if (doctor.image === null && doctor.gender === 'F') {
         defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_female.jpg`;
       }
 
       const completeDoctor = {
         ...doctor,
         image_url: defaultDoctorImage
-      }
+      };
       doctors.push(completeDoctor);
-    })
+    });
 
     res.json(doctors);
-  })
-}
+  });
+};
+
 
 //Rotta show doctor (visualizza un dottore le sue recensioni, le sue specializzazioni e le sedi in cui opera)
 const showDoctor = (req, res) => {
