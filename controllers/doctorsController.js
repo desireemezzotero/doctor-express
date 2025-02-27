@@ -44,20 +44,20 @@ const indexDoctors = (req, res) => {
       };
       doctors.push(completeDoctor);
     });
-    
-    let speciality= []
-    connection.query(sqlSpecialities, (err,specialitiesResults) => {
+
+    let speciality = []
+    connection.query(sqlSpecialities, (err, specialitiesResults) => {
       if (err) return res.status(500).json({ error: 'Query error on database' });
-      specialitiesResults.map( resul => {
+      specialitiesResults.map(resul => {
         const specialitiesComplete = {
           id: resul.id,
-          name : resul.name,
-          description : resul.description,
+          name: resul.name,
+          description: resul.description,
           icon: `${req.protocol}://${req.get('host')}/img/specialities_png/${resul.icon}`
         }
         speciality.push(specialitiesComplete)
       })
-      res.json({doctors, speciality});
+      res.json({ doctors, speciality });
     })
   });
 };
@@ -91,7 +91,7 @@ const showDoctor = (req, res) => {
         'vote', r.vote,
         'title', r.title,
         'description', r.description,
-        'date', r.create_date,
+        'date', r.created_at,
         'name', r.full_name
       )
     ) AS reviews
@@ -193,17 +193,17 @@ const storeDoctor = (req, res) => {
 //Rotta store review (aggiungi una recensione ad un determinato dottore)
 const storeReview = (req, res) => {
   const id = req.params.id
-  const { full_name, title, description, vote, date } = req.body
+  const { full_name, title, description, vote } = req.body
 
   if (!full_name || !title || !description || !vote) {
     res.status(400).json({ error: 'Tutti i dati sono obbligatori' })
   }
 
-  const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote, date) VALUES(?, ?, ?, ?, ?, ?)'
+  const sql = 'INSERT INTO doctors_db.reviews (doctor_id, full_name, title, description, vote) VALUES(?, ?, ?, ?, ?)'
   //Aggiunta dei dati nella tabella reviews al DataBase
   connection.query(
     sql,
-    [id, full_name, title, description, vote, date],
+    [id, full_name, title, description, vote],
     (err, results) => {
       if (err) return res.status(500).json({ error: 'Query al database doctors fallita' })
       res.status(201).json({ status: 'success', message: 'Recensione al dottore aggiunta con successo' })
