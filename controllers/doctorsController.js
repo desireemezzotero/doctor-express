@@ -244,8 +244,35 @@ const specialitiesSelect = (req,res) => {
   connection.query(sql, [id],(err,results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'Nessun dottore con questa specializzazione' });
+ 
+    
+    // Funzione per ottenere l'URL del placeholder in base al genere
+    function getPlaceholderUrl(gender) {
+      return gender === 'M' ? 'placeholder_male.jpg' : 'placeholder_female.jpg';
+    }
+    
+    // Funzione per ottenere l'URL dell'immagine
+    function getImageUrl(protocol, host, image, gender) {
+      
+      return image
+      ? `${protocol}://${host}/img/doctor_img/${image}`
+      : `${protocol}://${host}/img/doctor_img/${getPlaceholderUrl(gender)}`
+    }
+    
+    // Creazione dell'URL dell'immagine
+    const imageUrl = getImageUrl(req.protocol, req.get('host'), results[0].image, results[0].gender);
+    
+    let specialitiesArray = []
+    results.map(element => {
+      const newObjectSpeciality = {
+        ... element,
+        image_url : imageUrl
+      }
+      specialitiesArray.push(newObjectSpeciality)
+      return specialitiesArray
+    })
 
-    res.json({results})
+    res.json(specialitiesArray);
   })
 }
 module.exports = {
