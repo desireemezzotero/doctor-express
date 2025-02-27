@@ -19,5 +19,7 @@ router.post('/:id/reviews', doctorsController.storeReview);
 //Rotta per modificare i dati di un determinato dottore (momentaneamente non necessaria)
 router.put('/:id', doctorsController.updateDoctor);
 
+router.get('/speciality/:id', doctorsController.specialitiesSelect)
+
 
 module.exports = router
