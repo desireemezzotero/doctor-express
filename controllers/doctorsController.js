@@ -222,7 +222,7 @@ const updateDoctor = (req, res) => {
 const specialitiesSelect = (req,res) => {
   const id = req.params.id
 
-  const sql = `SELECT doctors.name, doctors.surname, doctors.image,
+  const sql = `SELECT doctors.name, doctors.surname, doctors.image, doctors.gender,
       (SELECT ROUND(AVG(reviews.vote), 1) 
       FROM reviews 
       WHERE reviews.doctor_id = doctors.id) AS average_vote,
@@ -245,32 +245,24 @@ const specialitiesSelect = (req,res) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'Nessun dottore con questa specializzazione' });
  
-    
-    // Funzione per ottenere l'URL del placeholder in base al genere
-    function getPlaceholderUrl(gender) {
-      return gender === 'M' ? 'placeholder_male.jpg' : 'placeholder_female.jpg';
-    }
-    
-    // Funzione per ottenere l'URL dell'immagine
-    function getImageUrl(protocol, host, image, gender) {
-      
-      return image
-      ? `${protocol}://${host}/img/doctor_img/${image}`
-      : `${protocol}://${host}/img/doctor_img/${getPlaceholderUrl(gender)}`
-    }
-    
-    // Creazione dell'URL dell'immagine
-    const imageUrl = getImageUrl(req.protocol, req.get('host'), results[0].image, results[0].gender);
-    
     let specialitiesArray = []
+
     results.map(element => {
-      const newObjectSpeciality = {
-        ... element,
-        image_url : imageUrl
+      let defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/${element.image}`;
+      // Logica di controllo per assenza di immagine
+      if (element.image === null && element.gender === 'M') {
+        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.jpg`;
+      } else if (element.image === null && element.gender === 'F') {
+        defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_female.jpg`;
       }
-      specialitiesArray.push(newObjectSpeciality)
-      return specialitiesArray
-    })
+
+      const newObjectSpeciality = {
+        ...element,
+        image_url: defaultDoctorImage
+      };
+      specialitiesArray.push(newObjectSpeciality);
+    });
+    
 
     res.json(specialitiesArray);
   })
