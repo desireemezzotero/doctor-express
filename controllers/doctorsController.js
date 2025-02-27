@@ -8,13 +8,13 @@ const indexDoctors = (req, res) => {
 
   const sql = `
     SELECT doctors.*, 
-      (SELECT ROUND(AVG(reviews.vote), 1) 
-      FROM reviews 
-      WHERE reviews.doctor_id = doctors.id) AS average_vote,
-      (SELECT COUNT(reviews.vote) 
-      FROM reviews 
-      WHERE reviews.doctor_id = doctors.id) AS reviews_count,
-      GROUP_CONCAT(DISTINCT specialities.name ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
+    (SELECT ROUND(AVG(reviews.vote), 1) 
+    FROM reviews 
+    WHERE reviews.doctor_id = doctors.id) AS average_vote,
+    (SELECT COUNT(reviews.vote) 
+    FROM reviews 
+    WHERE reviews.doctor_id = doctors.id) AS reviews_count,
+    GROUP_CONCAT(DISTINCT specialities.name ORDER BY specialities.name ASC SEPARATOR ', ') AS name_speciality
     FROM doctors
     JOIN doctor_speciality ON doctors.id = doctor_speciality.doctor_id
     JOIN specialities ON doctor_speciality.speciality_id = specialities.id
@@ -219,7 +219,7 @@ const updateDoctor = (req, res) => {
 
 
 //Rotta per i dottori con una determinata specializzazione
-const specialitiesSelect = (req,res) => {
+const specialitiesSelect = (req, res) => {
   const id = req.params.id
 
   const sql = `SELECT doctors.name, doctors.surname, doctors.image, doctors.gender,
@@ -241,10 +241,10 @@ const specialitiesSelect = (req,res) => {
       GROUP BY doctors.id
       ORDER BY average_vote DESC, reviews_count DESC;`
 
-  connection.query(sql, [id],(err,results) => {
+  connection.query(sql, [id], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'Nessun dottore con questa specializzazione' });
- 
+
     let specialitiesArray = []
 
     results.map(element => {
@@ -262,7 +262,7 @@ const specialitiesSelect = (req,res) => {
       };
       specialitiesArray.push(newObjectSpeciality);
     });
-    
+
 
     res.json(specialitiesArray);
   })
