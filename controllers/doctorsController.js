@@ -268,11 +268,29 @@ const specialitiesSelect = (req, res) => {
     res.json(specialitiesArray);
   })
 }
+
+//rotta per stampare i dottori con una recensione
+const reviewsDoctor = (req,res) => {
+ const vote = req.params.id
+
+ const sql = `SELECT doctors.* 
+              FROM doctors 
+              JOIN reviews ON doctors.id = reviews.doctor_id 
+              WHERE reviews.vote = ?`
+
+  connection.query(sql, [vote], (err,results) => {
+    if (err) return res.status(500).json({ error: 'Errore nella query del database' });
+    if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'nessun dottore trovato' });
+    res.json(results)
+  })
+}
+
 module.exports = {
   indexDoctors,
   showDoctor,
   storeDoctor,
   storeReview,
   updateDoctor,
-  specialitiesSelect
+  specialitiesSelect,
+  reviewsDoctor
 }
