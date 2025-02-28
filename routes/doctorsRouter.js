@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const upload = require('../middlewares/multer');
 
 //Import controller
 const doctorsController = require('../controllers/doctorsController');
+
+
 
 //Rotta per restituire la lista dei dottori
 router.get('/', doctorsController.indexDoctors);
@@ -11,7 +14,7 @@ router.get('/', doctorsController.indexDoctors);
 router.get('/:id', doctorsController.showDoctor);
 
 //Rotta per aggiungere un dottore alla lista
-router.post('/', doctorsController.storeDoctor);
+router.post('/', upload.single('image'), doctorsController.storeDoctor);
 
 //Rotta per aggiungere una recensione alla lista
 router.post('/:id/reviews', doctorsController.storeReview);

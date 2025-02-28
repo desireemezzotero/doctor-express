@@ -1,9 +1,9 @@
-require('dotenv').config();
-
 const express = require('express');
-const cors = require('cors')
 const app = express();
 const port = process.env.PORT || 3000;
+
+require('dotenv').config();
+const cors = require('cors');
 
 app.use(cors({ origin: process.env.ORIGIN }))
 //router import
@@ -15,7 +15,7 @@ const notFound = require('./middlewares/notFound');
 const imagePath = require('./middlewares/imagePath');
 
 app.use(express.static('public'));  //middleware per asset statici
-app.use(imagePath); //middleware per accogliere il perorso delle immagini
+app.use(imagePath); //middleware per accogliere il percorso delle immagini
 app.use(express.json());  //middleware per parsing del body
 
 //route entry point 

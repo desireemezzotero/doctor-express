@@ -31,6 +31,7 @@ const indexDoctors = (req, res) => {
     let doctors = [];
     results.map(doctor => {
       let defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/${doctor.image}`;
+
       // Logica di controllo per assenza di immagine
       if (doctor.image === null && doctor.gender === 'M') {
         defaultDoctorImage = `${req.protocol}://${req.get('host')}/img/doctor_img/placeholder_male.jpg`;
@@ -42,6 +43,7 @@ const indexDoctors = (req, res) => {
         ...doctor,
         image_url: defaultDoctorImage
       };
+
       doctors.push(completeDoctor);
     });
 
@@ -163,23 +165,22 @@ const showDoctor = (req, res) => {
 
 //Rotta store doctor (aggiungi un dottore e i relativi dati)
 const storeDoctor = (req, res) => {
-  const { name, surname, telephone, email, specialities, name_address } = req.body;
-  const imageName = 'imageName'; //req.file.filename;
+  const { name, surname, telephone, email, specialities, name_address, gender } = req.body;
+  const imageName = req.file.filename;
 
+  const specialitiesSplit = specialities?.split(',');
+  const specialitiesNumber = specialitiesSplit.map(Number);
 
-  const sql = 'INSERT INTO doctors (name, surname, telephone, email, image, name_address) VALUES (?, ?, ?, ?, ?, ?)';
+  const sql = 'INSERT INTO doctors (name, surname, telephone, email, image, name_address, gender) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
 
   //Aggiunta dati nella tabella doctors al DataBase
-  connection.query(sql, [name, surname, telephone, email, imageName, name_address], (err, results) => {
+  connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
-    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' });
-
-    const inseretIdDoctor = results.insertId;
-
-    if (specialities && specialities.length > 0) {
-      const specialityValues = specialities.map(specialityId => [inseretIdDoctor, specialityId]);
-
+    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
+    const inseretIdDoctor = results.insertId
+    if (specialitiesNumber && specialitiesNumber.length > 0) {
+      const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
       specialityValues.map(element => {
         //Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
         connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
