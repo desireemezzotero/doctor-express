@@ -273,10 +273,13 @@ const specialitiesSelect = (req, res) => {
 const reviewsDoctor = (req,res) => {
  const vote = req.params.id
 
- const sql = `SELECT doctors.* 
-              FROM doctors 
-              JOIN reviews ON doctors.id = reviews.doctor_id 
-              WHERE reviews.vote = ?`
+ const sql = ` SELECT doctors.name, doctors.id,
+               (SELECT ROUND(AVG(reviews.vote), 1) 
+               FROM reviews 
+               WHERE reviews.doctor_id = doctors.id) AS average_vote
+               FROM doctors
+               HAVING average_vote = ?
+               ORDER BY average_vote DESC;`
 
   connection.query(sql, [vote], (err,results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
