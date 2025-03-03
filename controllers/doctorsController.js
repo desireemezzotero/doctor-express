@@ -6,6 +6,7 @@ const indexDoctors = (req, res) => {
   // Salvo nel caso ci fosse, la specializzazione filtrata dalla request
   const specialitySearched = req.body.specialitySearched;
 
+
   const sql = `
     SELECT doctors.*, 
     (SELECT ROUND(AVG(reviews.vote), 1) 
@@ -270,15 +271,15 @@ const specialitiesSelect = (req, res) => {
 }
 
 //rotta per stampare i dottori con una recensione
-const reviewsDoctor = (req,res) => {
- const vote = req.params.id
+const reviewsDoctor = (req, res) => {
+  const vote = req.params.id
 
- const sql = `SELECT doctors.* 
+  const sql = `SELECT doctors.* 
               FROM doctors 
               JOIN reviews ON doctors.id = reviews.doctor_id 
               WHERE reviews.vote = ?`
 
-  connection.query(sql, [vote], (err,results) => {
+  connection.query(sql, [vote], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'nessun dottore trovato' });
     res.json(results)
