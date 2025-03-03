@@ -173,58 +173,41 @@ const storeDoctor = (req, res) => {
     return res.status(400).json({ message: 'Il nome deve contenere almeno 3 caratteri' });
   }
 
-  /* controllo cgnome */
+  /* controllo cognome */
   if (!surname || surname.length <= 3) {
     console.log('Il cognome deve contenere almeno 3 caratteri')
     return res.status(400).json({ message: 'Il cognome deve contenere almeno 3 caratteri' });
   }
-
-   /* controllo email */
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailRegex.test(email)) {
-    console.log('email non valida')
-    return res.status(400).json({ message: 'L\'email non è valida' });
-  }
-
-  // Controllo se l'email esiste già nel database
-  const checkEmailSql = 'SELECT * FROM doctors WHERE email = ?';
-  connection.query(checkEmailSql, [email], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Errore durante il controllo dell\'email' });
-    
-    if (results.length > 0) {
-      // Se l'email è già presente, invia un errore e fermati
-      return res.status(400).json({ message: 'L\'email è già associata ad un altro dottore' });
-    }})
-
+  
   let imageName = req.file.filename;
-
+  
   if (imageName.includes('placeholder')) {
     imageName = null;
   }
-
+  
   const specialitiesSplit = specialities?.split(',');
   const specialitiesNumber = specialitiesSplit.map(Number);
-
+  
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image, name_address, gender) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
 
-
+  
   //Aggiunta dati nella tabella doctors al DataBase
- connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
-    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
-    const inseretIdDoctor = results.insertId
-    if (specialitiesNumber && specialitiesNumber.length > 0) {
-      const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
-      specialityValues.map(element => {
-       // Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
-        connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
-          console.log('Inserimento dati con successo')
-        })
-      })
-    }
-
-  }) 
+    connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
+         if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
+         const inseretIdDoctor = results.insertId
+    
+          if (specialitiesNumber && specialitiesNumber.length > 0) {
+             const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
+             specialityValues.map(element => {
+              // Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
+                 connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
+                 console.log('Inserimento dati con successo')
+                 })
+              })
+           }
+           res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
+    })  
 }
 
 //Rotta store review (aggiungi una recensione ad un determinato dottore)
@@ -331,5 +314,5 @@ module.exports = {
   storeReview,
   updateDoctor,
   specialitiesSelect,
-  reviewsDoctor
+  reviewsDoctor,
 }
