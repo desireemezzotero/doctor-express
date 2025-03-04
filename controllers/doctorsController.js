@@ -6,6 +6,7 @@ const indexDoctors = (req, res) => {
   // Salvo nel caso ci fosse, la specializzazione filtrata dalla request
   const specialitySearched = req.body.specialitySearched;
 
+
   const sql = `
     SELECT doctors.*, 
     (SELECT ROUND(AVG(reviews.vote), 1) 
@@ -166,7 +167,7 @@ const showDoctor = (req, res) => {
 //Rotta store doctor (aggiungi un dottore e i relativi dati)
 const storeDoctor = (req, res) => {
   const { name, surname, telephone, email, specialities, name_address, gender } = req.body;
-  
+
   /* controllo nome */
   if (!name || name.length <= 3) {
     console.log('Il nome deve contenere almeno 3 caratteri')
@@ -178,36 +179,46 @@ const storeDoctor = (req, res) => {
     console.log('Il cognome deve contenere almeno 3 caratteri')
     return res.status(400).json({ message: 'Il cognome deve contenere almeno 3 caratteri' });
   }
+
+  if (!name || !surname || !telephone || !email || !specialities || !name_address || !gender) {
+    res.status(400).json({ error: 'Tutti i dati sono obbligatori' })
+  }
+
+  else if(name_address.length < 5){
+    res.status(400).json({ error: 'Indirizzo troppo breve' })
+  }
+
+  
   
   let imageName = req.file.filename;
-  
+
   if (imageName.includes('placeholder')) {
     imageName = null;
   }
-  
+
   const specialitiesSplit = specialities?.split(',');
   const specialitiesNumber = specialitiesSplit.map(Number);
-  
+
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image, name_address, gender) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
 
-  
+
   //Aggiunta dati nella tabella doctors al DataBase
-    connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
-         if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
-         const inseretIdDoctor = results.insertId
-    
-          if (specialitiesNumber && specialitiesNumber.length > 0) {
-             const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
-             specialityValues.map(element => {
-              // Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
-                 connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
-                 console.log('Inserimento dati con successo')
-                 })
-              })
-           }
-           res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
-    })  
+  connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
+    const inseretIdDoctor = results.insertId
+
+    if (specialitiesNumber && specialitiesNumber.length > 0) {
+      const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
+      specialityValues.map(element => {
+        // Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
+        connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
+          console.log('Inserimento dati con successo')
+        })
+      })
+    }
+    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
+  })
 }
 
 //Rotta store review (aggiungi una recensione ad un determinato dottore)
@@ -289,10 +300,10 @@ const specialitiesSelect = (req, res) => {
 }
 
 //rotta per stampare i dottori con una recensione
-const reviewsDoctor = (req,res) => {
- const vote = req.params.id
+const reviewsDoctor = (req, res) => {
+  const vote = req.params.id
 
- const sql = ` SELECT doctors.name, doctors.id,
+  const sql = ` SELECT doctors.name, doctors.id,
                (SELECT ROUND(AVG(reviews.vote), 1) 
                FROM reviews 
                WHERE reviews.doctor_id = doctors.id) AS average_vote
@@ -300,7 +311,7 @@ const reviewsDoctor = (req,res) => {
                HAVING average_vote = ?
                ORDER BY average_vote DESC;`
 
-  connection.query(sql, [vote], (err,results) => {
+  connection.query(sql, [vote], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
     if (results.length === 0 || results[0].doctorId === null) return res.status(404).json({ error: 'nessun dottore trovato' });
     res.json(results)
