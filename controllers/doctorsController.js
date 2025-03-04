@@ -167,7 +167,24 @@ const showDoctor = (req, res) => {
 //Rotta store doctor (aggiungi un dottore e i relativi dati)
 const storeDoctor = (req, res) => {
   const { name, surname, telephone, email, specialities, name_address, gender } = req.body;
-  const imageName = req.file.filename;
+
+  /* controllo nome */
+  if (!name || name.length <= 3) {
+    console.log('Il nome deve contenere almeno 3 caratteri')
+    return res.status(400).json({ message: 'Il nome deve contenere almeno 3 caratteri' });
+  }
+
+  /* controllo cognome */
+  if (!surname || surname.length <= 3) {
+    console.log('Il cognome deve contenere almeno 3 caratteri')
+    return res.status(400).json({ message: 'Il cognome deve contenere almeno 3 caratteri' });
+  }
+
+  let imageName = req.file.filename;
+
+  if (imageName.includes('placeholder')) {
+    imageName = null;
+  }
 
   const specialitiesSplit = specialities?.split(',');
   const specialitiesNumber = specialitiesSplit.map(Number);
@@ -175,20 +192,22 @@ const storeDoctor = (req, res) => {
   const sql = 'INSERT INTO doctors (name, surname, telephone, email, image, name_address, gender) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const sqlInsBridgeTable = 'INSERT INTO doctor_speciality (doctor_id, speciality_id) VALUES (?, ?)';
 
+
   //Aggiunta dati nella tabella doctors al DataBase
   connection.query(sql, [name, surname, telephone, email, imageName, name_address, gender], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore durante l\'aggiunta di un dottore' });
-    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
     const inseretIdDoctor = results.insertId
+
     if (specialitiesNumber && specialitiesNumber.length > 0) {
       const specialityValues = specialitiesNumber.map(specialityId => [inseretIdDoctor, specialityId])
       specialityValues.map(element => {
-        //Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
+        // Aggiunta dei dati nella tabella ponte tra doctors e specialities al DataBase
         connection.query(sqlInsBridgeTable, [element[0], element[1]], (err, results) => {
           console.log('Inserimento dati con successo')
         })
       })
     }
+    res.status(201).json({ status: 'Added', message: 'Dottore aggiunto con successo' })
   })
 }
 
@@ -274,10 +293,13 @@ const specialitiesSelect = (req, res) => {
 const reviewsDoctor = (req, res) => {
   const vote = req.params.id
 
-  const sql = `SELECT doctors.* 
-              FROM doctors 
-              JOIN reviews ON doctors.id = reviews.doctor_id 
-              WHERE reviews.vote = ?`
+  const sql = ` SELECT doctors.name, doctors.id,
+               (SELECT ROUND(AVG(reviews.vote), 1) 
+               FROM reviews 
+               WHERE reviews.doctor_id = doctors.id) AS average_vote
+               FROM doctors
+               HAVING average_vote = ?
+               ORDER BY average_vote DESC;`
 
   connection.query(sql, [vote], (err, results) => {
     if (err) return res.status(500).json({ error: 'Errore nella query del database' });
@@ -293,5 +315,5 @@ module.exports = {
   storeReview,
   updateDoctor,
   specialitiesSelect,
-  reviewsDoctor
+  reviewsDoctor,
 }
