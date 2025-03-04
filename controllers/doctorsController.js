@@ -178,6 +178,16 @@ const storeDoctor = (req, res) => {
     console.log('Il cognome deve contenere almeno 3 caratteri')
     return res.status(400).json({ message: 'Il cognome deve contenere almeno 3 caratteri' });
   }
+
+  if (!name || !surname || !telephone || !email || !specialities || !name_address || !gender) {
+    res.status(400).json({ error: 'Tutti i dati sono obbligatori' })
+  }
+
+  else if(name_address.length < 5){
+    res.status(400).json({ error: 'Indirizzo troppo breve' })
+  }
+
+  
   
   let imageName = req.file.filename;
   
