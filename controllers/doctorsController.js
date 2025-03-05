@@ -184,12 +184,12 @@ const storeDoctor = (req, res) => {
     res.status(400).json({ error: 'Tutti i dati sono obbligatori' })
   }
 
-  else if(name_address.length < 5){
+  else if (name_address.length < 5) {
     res.status(400).json({ error: 'Indirizzo troppo breve' })
   }
 
-  
-  
+
+
   let imageName = req.file.filename;
 
   if (imageName.includes('placeholder')) {
@@ -253,7 +253,7 @@ const updateDoctor = (req, res) => {
 const specialitiesSelect = (req, res) => {
   const id = req.params.id
 
-  const sql = `SELECT doctors.name, doctors.surname, doctors.image, doctors.gender,
+  const sql = `SELECT doctors.id, doctors.name, doctors.surname, doctors.image, doctors.gender,
       (SELECT ROUND(AVG(reviews.vote), 1) 
       FROM reviews 
       WHERE reviews.doctor_id = doctors.id) AS average_vote,
